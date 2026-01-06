@@ -7,12 +7,17 @@
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
 		"test": "vitest",
-		"cf-typegen": "wrangler types"
+		"cf-typegen": "wrangler types",
+		"db:init": "wrangler d1 execute food-turns-luck --file=./scripts/init-d1.sql"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
 		"typescript": "^5.5.2",
 		"vitest": "~3.2.0",
 		"wrangler": "^4.56.0"
+	},
+	"dependencies": {
+		"itty-router": "^5.0.22",
+		"jose": "^6.1.3"
 	}
 }

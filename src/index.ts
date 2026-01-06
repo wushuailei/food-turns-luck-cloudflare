@@ -1,18 +1,26 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.jsonc`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+import { router } from './routers';
+import { ROUTER_WHITE_LIST, RESPONSE_CODE } from './constants/index';
+import { verifyToken } from './utils/jwt';
+import { createResponse } from './utils/index';
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
+		const path = new URL(request.url).pathname;
+		if (!ROUTER_WHITE_LIST.includes(path)) {
+			const authHeader = request.headers.get('Authorization');
+			if (!authHeader || !authHeader.startsWith('Bearer ')) {
+				return createResponse({
+					code: RESPONSE_CODE.UNAUTHORIZED,
+				});
+			}
+			const token = authHeader.substring(7);
+			const payload = await verifyToken(token);
+			if (!payload) {
+				return createResponse({
+					code: RESPONSE_CODE.UNAUTHORIZED,
+				});
+			}
+		}
+		return router.fetch(request, env, ctx);
 	},
 } satisfies ExportedHandler<Env>;
