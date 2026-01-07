@@ -8,21 +8,23 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2026-01-03",
 	"observability": {
-		"enabled": true
+		"enabled": true,
 	},
 	"d1_databases": [
 		{
 			"binding": "food_turns_luck_d1",
 			"database_name": "food-turns-luck",
-			"database_id": "fcd56367-b17e-4a29-a403-84979b630f8f"
-		}
+			"database_id": "fcd56367-b17e-4a29-a403-84979b630f8f",
+			"preview_database_id": "fcd56367-b17e-4a29-a403-84979b630f8f",
+		},
 	],
 	"r2_buckets": [
 		{
 			"binding": "food_turns_luck_r2",
-			"bucket_name": "food-turns-luck"
-		}
-	]
+			"bucket_name": "food-turns-luck",
+			"preview_bucket_name": "food-turns-luck",
+		},
+	],
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
