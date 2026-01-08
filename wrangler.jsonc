@@ -22,7 +22,7 @@
 		{
 			"binding": "food_turns_luck_r2",
 			"bucket_name": "food-turns-luck",
-			"preview_bucket_name": "food-turns-luck",
+			"preview_bucket_name": "food-turns-luck-dev",
 		},
 	],
 	/**

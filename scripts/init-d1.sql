@@ -79,16 +79,16 @@ CREATE INDEX IF NOT EXISTS idx_user_favorites_created_at ON user_favorites(creat
 
 -- 订单表
 CREATE TABLE IF NOT EXISTS orders (
-  id TEXT PRIMARY KEY,                              -- 订单唯一标识符
+  id TEXT PRIMARY KEY,                              -- 订单唯一标识符（UUID）
   user_id TEXT NOT NULL,                            -- 用户ID
-  order_no TEXT NOT NULL UNIQUE,                    -- 订单号（唯一）
+  order_no TEXT NOT NULL UNIQUE,                    -- 订单号（唯一，用于显示）
   target_time TEXT,                                 -- 目标时间（期待做菜的时间）
-  status TEXT NOT NULL DEFAULT 'pending',           -- 状态: pending=待完成, completed=已完成
+  status TEXT NOT NULL DEFAULT 'pending',           -- 状态: pending=待完成, completed=已完成, timeout=超时
   remark TEXT,                                      -- 订单备注
   created_at TEXT DEFAULT (datetime('now')),        -- 下单时间
   
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  CHECK (status IN ('pending', 'completed'))
+  CHECK (status IN ('pending', 'completed', 'timeout'))
 );
 
 -- 订单表索引
@@ -114,23 +114,37 @@ CREATE TABLE IF NOT EXISTS order_recipes (
 CREATE INDEX IF NOT EXISTS idx_order_recipes_order_id ON order_recipes(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_recipes_recipe_id ON order_recipes(recipe_id);
 
--- 用户关系表（伴侣/家庭关系）
-CREATE TABLE IF NOT EXISTS user_relationships (
-  user_id TEXT NOT NULL,                            -- 用户ID
-  related_user_id TEXT NOT NULL,                    -- 关联用户ID（伴侣/家人）
-  relationship_type TEXT DEFAULT 'partner',         -- 关系类型: partner=伴侣, family=家人
+-- 用户组表（家庭/伴侣组）
+CREATE TABLE IF NOT EXISTS user_groups (
+  id TEXT PRIMARY KEY,                              -- 组唯一标识符
+  name TEXT,                                        -- 组名称（可选，如"我们的小家"）
+  avatar_key TEXT,                                  -- 组头像 R2 key
+  group_type TEXT NOT NULL DEFAULT 'family',        -- 组类型: family=家庭, partner=伴侣
   created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now')),
   
-  PRIMARY KEY (user_id, related_user_id),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (related_user_id) REFERENCES users(id) ON DELETE CASCADE,
-  CHECK (user_id != related_user_id),               -- 不能和自己建立关系
-  CHECK (relationship_type IN ('partner', 'family'))
+  CHECK (group_type IN ('family', 'partner'))
 );
 
--- 用户关系表索引
-CREATE INDEX IF NOT EXISTS idx_user_relationships_user_id ON user_relationships(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_relationships_related_user_id ON user_relationships(related_user_id);
+-- 用户组成员表（将用户加入组）
+CREATE TABLE IF NOT EXISTS user_group_members (
+  group_id TEXT NOT NULL,                           -- 组ID
+  user_id TEXT NOT NULL,                            -- 用户ID
+  role TEXT DEFAULT 'member',                       -- 角色: owner=创建者, member=成员
+  can_manage INTEGER DEFAULT 0,                     -- 是否可管理该用户组: 1=可管理, 0=不可管理
+  joined_at TEXT DEFAULT (datetime('now')),
+  
+  PRIMARY KEY (group_id, user_id),
+  FOREIGN KEY (group_id) REFERENCES user_groups(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CHECK (role IN ('owner', 'member')),
+  CHECK (can_manage IN (0, 1))
+);
+
+-- 用户组成员表索引
+CREATE INDEX IF NOT EXISTS idx_user_group_members_group_id ON user_group_members(group_id);
+CREATE INDEX IF NOT EXISTS idx_user_group_members_user_id ON user_group_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_group_members_role ON user_group_members(role);
 
 -- 订单评价表
 CREATE TABLE IF NOT EXISTS order_reviews (

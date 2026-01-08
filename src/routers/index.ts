@@ -2,6 +2,8 @@ import { RequestLike, Router } from 'itty-router';
 import { userRouter, userBasePath } from './user';
 import { authRouter, authBasePath } from './auth';
 import { recipeRouter, recipeBasePath } from './recipe';
+import { orderRouter, orderBasePath } from './order';
+import { groupRouter, groupBasePath } from './group';
 import { createResponse } from '../utils/index';
 import { RESPONSE_CODE } from '../constants/index';
 
@@ -21,6 +23,16 @@ router.all(`${userBasePath}/*`, (request: RequestLike, env: Env, ctx) => {
 // 挂载菜谱路由
 router.all(`${recipeBasePath}/*`, (request: RequestLike, env: Env, ctx) => {
 	return recipeRouter.fetch(request, env, ctx);
+});
+
+// 挂载订单路由
+router.all(`${orderBasePath}/*`, (request: RequestLike, env: Env, ctx) => {
+	return orderRouter.fetch(request, env, ctx);
+});
+
+// 挂载用户组路由
+router.all(`${groupBasePath}/*`, (request: RequestLike, env: Env, ctx) => {
+	return groupRouter.fetch(request, env, ctx);
 });
 
 // 404 处理

@@ -9,6 +9,11 @@ export const recipeRouter = Router();
 // 基础路由
 export const recipeBasePath = '/recipe' as const;
 
+// 生成 UUID v4
+function generateId(): string {
+	return crypto.randomUUID();
+}
+
 // 创建菜谱
 recipeRouter.post(`${recipeBasePath}/create`, async (request: Request, env: Env): Promise<Response> => {
 	try {
@@ -22,10 +27,10 @@ recipeRouter.post(`${recipeBasePath}/create`, async (request: Request, env: Env)
 		const userId = (request as any).user?.id;
 
 		// 验证必填字段
-		if (!body.id || !userId || !body.name || !body.step_type) {
+		if (!userId || !body.name || !body.step_type) {
 			return createResponse({
 				code: RESPONSE_CODE.BAD_REQUEST,
-				message: '缺少必填字段：id, name, step_type',
+				message: '缺少必填字段：name, step_type',
 			});
 		}
 
@@ -37,9 +42,12 @@ recipeRouter.post(`${recipeBasePath}/create`, async (request: Request, env: Env)
 			});
 		}
 
+		// 自动生成菜谱 ID
+		const recipeId = generateId();
+
 		// 创建菜谱记录
 		const recipeData: RecipeCreateFields = {
-			id: body.id,
+			id: recipeId,
 			user_id: userId,
 			name: body.name,
 			step_type: body.step_type,
@@ -64,13 +72,13 @@ recipeRouter.post(`${recipeBasePath}/create`, async (request: Request, env: Env)
 				}
 
 				// 创建菜谱-标签关联
-				await db.prepare('INSERT INTO recipe_tags (recipe_id, tag_name) VALUES (?, ?)').bind(body.id, tagName).run();
+				await db.prepare('INSERT INTO recipe_tags (recipe_id, tag_name) VALUES (?, ?)').bind(recipeId, tagName).run();
 			}
 		}
 
 		return createResponse({
 			message: '菜谱创建成功',
-			data: { id: body.id },
+			data: { id: recipeId },
 		});
 	} catch (error) {
 		return createResponse({
@@ -113,10 +121,15 @@ recipeRouter.post(`${recipeBasePath}/list`, async (request: Request, env: Env): 
 				`(
 					r.is_public = 1 
 					OR r.user_id = ? 
-					OR r.user_id IN (SELECT related_user_id FROM user_relationships WHERE user_id = ?)
+					OR r.user_id IN (
+					SELECT m2.user_id 
+					FROM user_group_members m1
+					INNER JOIN user_group_members m2 ON m1.group_id = m2.group_id
+					WHERE m1.user_id = ? AND m2.user_id != ?
+				)
 				)`,
 			);
-			params.push(currentUserId, currentUserId);
+			params.push(currentUserId, currentUserId, currentUserId);
 		} else {
 			// 未登录用户只能看公开的菜谱
 			conditions.push('r.is_public = 1');

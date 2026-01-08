@@ -50,7 +50,7 @@ authRouter.post(`${authBasePath}/login`, async (request: Request, env: Env): Pro
 		if (wxData.errcode) {
 			return createResponse({
 				code: RESPONSE_CODE.ERROR,
-				message: `微信登录失败: ${wxData.errmsg}`,
+				message: `微信登录失败`,
 			});
 		}
 
@@ -86,13 +86,13 @@ authRouter.post(`${authBasePath}/login`, async (request: Request, env: Env): Pro
 			data: {
 				token,
 				user: {
-					id: user?.id,
 					nickname: user?.nickname,
 					avatar_key: user?.avatar_key,
 				},
 			},
 		});
 	} catch (error) {
+		console.log(error);
 		return createResponse({
 			code: RESPONSE_CODE.ERROR,
 			message: error instanceof Error ? error.message : '未知错误',
